@@ -1,0 +1,13 @@
+{
+  "name": "writeless",
+  "private": true,
+  "scripts": {
+    "dev:api": "pnpm --filter @writeless/api dev",
+    "dev:web": "pnpm --filter @writeless/web dev",
+    "dev:admin": "pnpm --filter @writeless/admin dev",
+    "dev:mobile": "pnpm --filter @writeless/mobile dev"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
