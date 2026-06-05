@@ -8,9 +8,9 @@
     "noEmit": true,
     "allowSyntheticDefaultImports": true,
     "paths": {
-      "@writeless/types": ["../../packages/types/src/index.ts"]
+      "@/*": ["./src/*"]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx"],
+  "include": ["**/*.ts", "**/*.tsx", "nativewind-env.d.ts"],
   "exclude": ["node_modules", "babel.config.ts", "metro.config.ts"]
 }

@@ -6,7 +6,7 @@
 
 **Writeless** — voice/recording app (transcribe, summarize). Monorepo for a startup product.
 
-**Vision:** Recording → transcript → summary → key points. Max recording **20 minutes** (1200s). Status: `processing` → `done` | `failed`.
+**Vision:** Recording → transcript → summary → key points. Max recording **30 minutes** (1800s). Status: `processing` → `done` | `failed`.
 
 ## Monorepo
 
@@ -56,6 +56,7 @@ pnpm --filter @writeless/web typecheck
 8. **No placeholder comments** like "add code here" — ship real working code
 9. **Do not commit** `.env` — only `.env.example` in `apps/api`
 10. **Do not create git commits** unless the user explicitly asks
+11. **Mobile i18n every time** — any user-visible string → `t("…")` + keys in **all three** locale files (`en`, `uz`, `ru`). Never ship hardcoded UI copy on mobile. Run `pnpm --filter @writeless/mobile check:locales` before finishing mobile UI work.
 
 ---
 
@@ -78,7 +79,7 @@ Path: `packages/types/src/index.ts`
 
 - `ApiResponse<T>` — `{ success, data, message? }`
 - `User` — `_id`, `email`, `name`, `createdAt`
-- `Recording` — `_id`, `userId`, `title`, `duration` (seconds, max 1200), optional `transcript`, `summary`, `keyPoints`, `status: "processing" | "done" | "failed"`, `createdAt`
+- `Recording` — `_id`, `userId`, `title`, `duration` (seconds, max 1800), optional `transcript`, `summary`, `keyPoints`, `status: "processing" | "done" | "failed"`, `createdAt`
 
 **Rule:** New cross-app contracts → add here first, then `pnpm install` if needed.
 
@@ -123,15 +124,30 @@ apps/api/src/
 
 ---
 
-## `apps/mobile` — Expo + React Navigation
+## `apps/mobile` — Expo + Expo Router
 
-- **Expo SDK ~52**, TypeScript template style
-- **Navigation:** `@react-navigation/native` + `native-stack` — `src/navigation/RootNavigator.tsx`
-- **Screens:** `src/screens/<Name>Screen.tsx`
-- **Reanimated:** import `"react-native-reanimated"` at top of `App.tsx`; `babel.config.ts` has reanimated plugin
-- **Monorepo:** `metro.config.ts` — `watchFolders` + `nodeModulesPaths` for pnpm
-- **Types:** `src/types/index.ts` re-exports from `@writeless/types`
-- **Entry:** `App.tsx` → `NavigationContainer` + `RootNavigator`
+- **Expo SDK ~52**, entry `expo-router/entry`, screens in `src/app/`
+- **UI:** NativeWind v4, Inter fonts, Zustand stores, **i18n (en / uz / ru) — mandatory on every UI change**
+- **Reanimated + Gesture Handler** — `babel.config.ts` reanimated plugin last
+- **Monorepo:** `metro.config.ts` — `watchFolders`, `nodeModulesPaths`, NativeWind
+- **Types:** `src/types/index.ts` (app-specific; API may align with `@writeless/types` later)
+- **Env:** `apps/mobile/.env` with `EXPO_PUBLIC_*` keys (not committed)
+- **Recording limit:** `MAX_RECORDING_MINUTES` (30) in `apps/mobile/src/constants/config.ts` → `maxRecordingSeconds`; update locales + onboarding badge when changing
+
+### Mobile i18n (STRICT — every task)
+
+| Rule | Detail |
+|------|--------|
+| **Languages** | English (`en`), Uzbek (`uz`), Russian (`ru`) |
+| **Files** | `apps/mobile/src/locales/en.json`, `uz.json`, `ru.json` |
+| **Usage** | `const { t } = useTranslation()` then `t("section.key")` — **never** literal button/label text in JSX |
+| **New copy** | Add the same key to **all three** JSON files in the same edit |
+| **Verify** | `pnpm --filter @writeless/mobile check:locales` (key parity across locales) |
+| **Init** | `src/i18n/index.ts` loads on app start; `hydrate()` awaits `initI18n()` before UI |
+| **Change language** | Profile → Language (`LanguageModal`), or first-run `language` screen |
+| **After locale edits** | Restart Expo with cache clear if keys show as `home.someKey` in UI: `npx expo start -c` |
+
+**Common mistake:** Adding `t("home.newKey")` in TSX but only updating `en.json` → UI shows the raw key. Always update **en + uz + ru** together.
 
 ---
 
@@ -144,6 +160,7 @@ When adding or changing features:
 - [ ] `tsconfig.json` still extends `tsconfig.base.json`
 - [ ] `pnpm --filter <package> typecheck` passes
 - [ ] Brand colors on any new UI
+- [ ] **Mobile:** new/changed UI strings in `en.json`, `uz.json`, `ru.json`; `check:locales` passes
 - [ ] No mongoose, no npm/yarn, no stray `.js` source files
 
 ---
@@ -156,6 +173,6 @@ All apps show centered **"All good"** placeholder UI. API has health module only
 
 ## Short prompt for new chats
 
-> Working on **Writeless** at `product/writeless/`. pnpm monorepo: Expo mobile, Bun+Elysia API (MongoDB official driver, no Mongoose), Next.js web (3000) + admin (3002). Strict TS, shared types in `@writeless/types`, every tsconfig extends `tsconfig.base.json`. Brand: `#6C63FF`, `#F5F5FF`, `#1A1A2E`. API: `modules/<feature>/{route,controller}.ts`. Follow **AGENTS.md**. No npm/yarn. Don't commit unless I ask.
+> Working on **Writeless** at `product/writeless/`. pnpm monorepo: Expo mobile, Bun+Elysia API (MongoDB official driver, no Mongoose), Next.js web (3000) + admin (3002). Strict TS, shared types in `@writeless/types`, every tsconfig extends `tsconfig.base.json`. Brand: `#6C63FF`, `#F5F5FF`, `#1A1A2E`. API: `modules/<feature>/{route,controller}.ts`. **Mobile: i18n en/uz/ru on every UI string — `check:locales`.** Follow **AGENTS.md**. No npm/yarn. Don't commit unless I ask.
 
 **What to say each session:** project is Writeless — follow `AGENTS.md`, plus one sentence for the task (e.g. auth, recordings CRUD, upload pipeline).
